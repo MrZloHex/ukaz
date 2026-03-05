@@ -31,6 +31,18 @@ const (
 	Width57_5mm = 57.5 // 33 chars (7x9), 25 chars (9x9)
 )
 
+// Device is the interface for receipt printing used by the ukaz driver.
+// A nil Device means no printer attached (PRINT commands reply ERR NO_DEVICE).
+type Device interface {
+	Init() error
+	PrintLineWithSetup(text string) error
+	SetPrintMode(mode byte) error // 7x9 = 0, 9x9 = 1 (Font B)
+	FeedLines(n int) error
+	PartialCut() error
+	FullCut() error
+	Close() error
+}
+
 // Printer sends ESC/POS commands to an ND77 over a serial port.
 type Printer struct {
 	port      serial.Port

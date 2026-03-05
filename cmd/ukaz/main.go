@@ -40,7 +40,7 @@ func main() {
 		proto.WithReconnect(5*time.Second),
 	)
 
-	var prn ukaz.Printer
+	var prn printer.Device
 	if *serialPort != "" {
 		p, err := printer.Open(*serialPort, *baud)
 		if err != nil {
