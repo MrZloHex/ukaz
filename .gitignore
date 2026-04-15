@@ -1,2 +1,9 @@
-bin/
+build/
+.cache/
+certs/
+
 *.swp
+
+*.md
+compile_commands.json
+sdkconfig*
