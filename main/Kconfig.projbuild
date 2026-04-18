@@ -4,23 +4,112 @@ menu "UKAZ WiFi Configuration"
         string "WiFi SSID"
         default "myssid"
         help
-            SSID (network name) for the example to connect to.
+            SSID (network name) of the access point to connect to.
 
     config ESP_WIFI_PASSWORD
         string "WiFi Password"
         default "mypassword"
         help
-            WiFi password (WPA or WPA2) for the example to use.
+            WPA/WPA2 password of the access point.
 
     config ESP_MAXIMUM_RETRY
-        int "Maximum retry"
+        int "Maximum retry count"
         default 5
         help
-            Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+            How many times to retry connecting before giving up.
 endmenu
 
-config NODE_NAME
-    string "Node Name"
-    default "UKAZ"
-    help
-        The node name in MONOLITH system
+
+menu "MONOLITH Configuration"
+
+    config NODE_NAME
+        string "Node name"
+        default "UKAZ"
+        help
+            Unique name of this node in the MONOLITH system.
+
+    config CONCENTRATOR_URI
+        string "Concentrator URI"
+        default "concentrator.local"
+        help
+            Hostname or IP address of the MONOLITH concentrator.
+
+    config CONC_URI_IP
+        bool "Concentrator URI is IP"
+        default False
+        help
+            If URI of the MONOLITH concentrator is IP SET IT UP!
+
+    config CONCENTRATOR_PORT
+        int "Concentrator port"
+        default 443
+        help
+            TCP port the concentrator listens on.
+endmenu
+
+menu "Certificates configuration"
+    config CERTS_DIR
+        string "Certificates directory"
+        default "certs"
+        help
+            Directory (relative to project root) containing the CA bundle,
+            client certificate and client key. This directory is also packed
+            into the SPIFFS image.
+
+    config CA_BUNDLE
+        string "CA bundle filename"
+        default "ca-bundle.pem"
+        help
+            Filename of the CA bundle inside CERTS_DIR.
+
+    config CLIENT_CERT
+        string "Client certificate filename"
+        default "ukaz.crt"
+        help
+            Filename of the signed client certificate inside CERTS_DIR.
+
+    config CLIENT_KEY
+        string "Client key filename"
+        default "ukaz.key"
+        help
+            Filename of the client private key inside CERTS_DIR.
+endmenu
+
+menu "Build configuration"
+    config MKSPIFFS_BIN
+        string "mkspiffs binary"
+        default "mkspiffs"
+        help
+            Path or name of the mkspiffs executable used to create the SPIFFS
+            image. Must be the build matching the required version and flags
+            listed in README.txt.
+
+    config SPIFFS_PARTITION_BIN
+        string "SPIFFS image output file"
+        default "storage.bin"
+        help
+            Output filename for the generated SPIFFS image (make spiffs).
+
+    config SPIFFS_BLOCK_SIZE
+        int "SPIFFS block size"
+        default 4096
+        help
+            Erase block size in bytes passed to mkspiffs (-b). Must match the
+            flash erase block size (typically 4096 for ESP8266).
+            Not present in IDF SPIFFS Kconfig, so defined here.
+
+    config SPIFFS_STORAGE_OFFSET
+        hex "Storage partition flash offset"
+        default 0x200000
+        help
+            Flash address where the storage partition starts.
+            Must match the offset in partitions.csv.
+
+    config SPIFFS_STORAGE_SIZE
+        hex "Storage partition size"
+        default 0x200000
+        help
+            Size in bytes of the storage partition.
+            Must match the size in partitions.csv.
+
+endmenu

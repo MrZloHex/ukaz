@@ -3,4 +3,4 @@
 #
 
 COMPONENT_ADD_INCLUDEDIRS := . inc
-COMPONENT_SRCDIRS := . src
+COMPONENT_SRCDIRS := . src src/net

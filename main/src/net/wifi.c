@@ -1,17 +1,14 @@
-#include "wifi.h"
+#include "net/wifi.h"
 
 #include "esp_log.h"
 #include "tcpip_adapter.h"
 #include "esp_wifi.h"
 
-
-#define ERR_CHECK_RET(__X__) ({                         \
-        esp_err_t __err_ret = (__X__);                  \
-        ESP_ERROR_CHECK_WITHOUT_ABORT(__err_ret);       \
-        if (__err_ret) { return __err_ret; } })
+#include "utils.h"
 
 
-static const char *TAG = "wifi";
+
+static const char *TAG = "WIFI";
 static uint8_t s_retry_num = 0;
 
 static void
@@ -29,6 +26,7 @@ wifi_handler
         {
             case WIFI_EVENT_STA_START:
             {
+                ESP_ERROR_CHECK_WITHOUT_ABORT(tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, CONFIG_NODE_NAME));
                 ESP_LOGI(TAG, "connecting");
                 ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_connect());
             } break;
@@ -43,7 +41,6 @@ wifi_handler
                 } 
                 else 
                 { /* xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT); */ }
-
                 ESP_LOGI(TAG,"connect to the AP fail");
             } break;
         }
@@ -55,29 +52,36 @@ wifi_handler
             case IP_EVENT_STA_GOT_IP:
             {
                 ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
-                ESP_LOGI(TAG, "got ip: %s", ip4addr_ntoa(&event->ip_info.ip));
+                ESP_LOGI
+                (
+                    TAG,
+                    "got ip: " IPSTR ", mask: " IPSTR ", gw: " IPSTR,
+                    IP2STR(&event->ip_info.ip),
+                    IP2STR(&event->ip_info.netmask),
+                    IP2STR(&event->ip_info.gw)
+                );
                 s_retry_num = 0;
-                // xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+
+                EventGroupHandle_t eg = (EventGroupHandle_t)arg;
+                xEventGroupSetBits(eg, WIFI_CONNECTED_BIT);
             } break;
         }
     }
 }
 
 esp_err_t
-wifi_init(void)
+wifi_init(EventGroupHandle_t eg)
 {
-    ESP_LOGI(TAG, "initializing");
+    ESP_LOGI(TAG, "init");
     tcpip_adapter_init();
-
-    ERR_CHECK_RET(tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, CONFIG_NODE_NAME));
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ERR_CHECK_RET(esp_wifi_init(&cfg));
     ERR_CHECK_RET(esp_wifi_set_mode(WIFI_MODE_STA));
 
 
-    ERR_CHECK_RET(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_handler, NULL));
-    ERR_CHECK_RET(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_handler, NULL));
+    ERR_CHECK_RET(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_handler, eg));
+    ERR_CHECK_RET(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_handler, eg));
 
     wifi_config_t wifi_config =
     {
@@ -90,6 +94,8 @@ wifi_init(void)
     };
     ERR_CHECK_RET(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
     ERR_CHECK_RET(esp_wifi_start());
+
+    ESP_LOGI(TAG, "OK");
 
     return ESP_OK;
 }

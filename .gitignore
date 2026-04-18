@@ -7,3 +7,5 @@ certs/
 *.md
 compile_commands.json
 sdkconfig*
+
+storage.bin
